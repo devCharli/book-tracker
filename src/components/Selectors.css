@@ -1,0 +1,9 @@
+.selector-buttons {
+  display: flex;
+}
+.selector-btn {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  margin: 10px;
+}
