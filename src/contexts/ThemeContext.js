@@ -1,43 +1,99 @@
-import { createContext, useReducer, useState } from "react";
+import { createContext, useReducer } from "react";
 
 export const ThemeContext = createContext();
 
 function themeReducer(state, action) {
   switch (action.type) {
-    case "CHANGE_COLOR":
-      return { ...state, color: action.payload };
+    case "CHANGE_MODE":
+      return { ...state, mode: action.payload };
     case "ADD_BOOK":
       return { ...state, bookList: [...state.bookList, action.payload] };
+    case "DELETE_BOOK":
+      return {
+        ...state,
+        bookList: [...state.bookList].filter(
+          (book) => book.id !== action.payload
+        ),
+        isEditing: false,
+      };
+    case "IS_EDITING":
+      return {
+        ...state,
+        isEditing: action.payload,
+      };
+    case "CHOOSE_BOOK":
+      return {
+        ...state,
+        chosenBook: action.payload,
+      };
+    case "EDIT_BOOK":
+      const updateBook = action.payload;
+      const updateBooks = state.bookList.map((book) => {
+        if (book.id === updateBook.id) {
+          return updateBook;
+        }
+        return book;
+      });
+
+      return {
+        ...state,
+        bookList: updateBooks,
+        isEditing: false,
+      };
     default:
       return state;
   }
 }
 
+const getBookList = () => {
+  const savedList = localStorage.getItem("booklist");
+  if (savedList) {
+    return JSON.parse(savedList);
+  } else {
+    return [];
+  }
+};
+
 export function ThemeProvider({ children }) {
-  const [bookList, setBookList] = useState([
-    { title: "gone with wind", author: "Sharlot" },
-    { title: "pachinko", author: "Kim" },
-    { title: "Wahle", author: "천명관" },
-  ]);
   const [state, dispatch] = useReducer(themeReducer, {
-    color: "gray",
-    bookList,
+    bookList: getBookList(),
+    isEditing: false,
+    chosenBook: null,
+    mode: "dark",
   });
 
-  const changeColor = (color) => {
-    dispatch({ type: "CHANGE_COLOR", payload: color });
+  const changeMode = (mode) => {
+    dispatch({ type: "CHANGE_MODE", payload: mode });
   };
 
   const addBook = (book) => {
     dispatch({ type: "ADD_BOOK", payload: book });
-    // let copy = [...bookList];
-    // copy.push(book);
-    // setBookList(copy);
-    // console.log(bookList);
+  };
+
+  const deleteBook = (id) => {
+    dispatch({ type: "DELETE_BOOK", payload: id });
+  };
+
+  const toggleEditing = (book) => {
+    dispatch({ type: "IS_EDITING", payload: true });
+    dispatch({ type: "CHOOSE_BOOK", payload: book });
+  };
+
+  const saveEditedBook = (book) => {
+    dispatch({ type: "EDIT_BOOK", payload: book });
   };
 
   return (
-    <ThemeContext.Provider value={{ ...state, changeColor, addBook }}>
+    <ThemeContext.Provider
+      value={{
+        ...state,
+        changeMode,
+        addBook,
+        deleteBook,
+        toggleEditing,
+        saveEditedBook,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
